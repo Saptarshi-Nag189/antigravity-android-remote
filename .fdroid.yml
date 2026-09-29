@@ -1,0 +1,39 @@
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1
+
+Categories:
+  - Development
+License: Apache-2.0
+WebSite: https://github.com/Saptarshi-Nag189/antigravity-android-remote
+SourceCode: https://github.com/Saptarshi-Nag189/antigravity-android-remote
+IssueTracker: https://github.com/Saptarshi-Nag189/antigravity-android-remote/issues
+
+AutoName: Antigravity Remote
+Summary: Companion remote and workflow controller for Antigravity agent sessions
+Description: |-
+  Antigravity Remote is an open-source companion utility and floating HUD designed for developers managing Google Antigravity web sessions from an Android device.
+
+  Key features:
+  - Floating companion controls: Draggable Material 3 interface provides immediate access to session inspection, connection state, and account switching.
+  - Workstation pairing: Step-by-step guidance to connect your Android device with a workstation running Antigravity via the /remote command.
+  - Quick command injector: Dispatch workflow shortcuts (/goal, /plan, /browser, /boost, /schedule, /learn) directly into active sessions.
+  - Persistent streaming: Low-overhead foreground service maintains session streaming and prevents WebSocket disconnects during multitasking.
+  - Native file attachment: Integrated system photo picker simplifies attaching logs, code snippets, and screenshots.
+  - 100% FLOSS: Contains zero advertising SDKs, zero tracking libraries, and zero proprietary dependencies.
+
+AntiFeatures:
+  - NonFreeNet
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: app
+    gradle:
+      - yes
+    output: build/outputs/apk/release/app-release-unsigned.apk
+    srclib: []
+    build:
+      - ./gradlew assembleRelease
