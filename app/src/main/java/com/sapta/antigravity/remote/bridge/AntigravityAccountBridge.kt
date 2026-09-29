@@ -28,7 +28,17 @@ class AntigravityAccountBridge(
             return
         }
 
-        val cleanName = name?.trim()?.take(80) ?: ""
+        val rawName = name?.trim()?.take(80) ?: ""
+        val cleanName = if (rawName.equals("Google Account", ignoreCase = true) ||
+            rawName.equals("Antigravity User", ignoreCase = true) ||
+            rawName.equals("Profile", ignoreCase = true) ||
+            rawName.contains("@")
+        ) {
+            ""
+        } else {
+            rawName
+        }
+
         val cleanEmail = if (!email.isNullOrBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             email.trim()
         } else {
@@ -65,17 +75,31 @@ class AntigravityAccountBridge(
     }
 
     private fun isGoogleOrigin(url: String): Boolean {
-        return url.startsWith("https://antigravity.google.com/") ||
-                url.startsWith("https://accounts.google.com/")
+        return try {
+            val uri = Uri.parse(url)
+            val host = uri.host?.lowercase() ?: ""
+            val isGoogle = (uri.scheme == "https" || uri.scheme == "http") && (
+                host == "google.com" ||
+                host.endsWith(".google.com") ||
+                host == "googleusercontent.com" ||
+                host.endsWith(".googleusercontent.com")
+            )
+            val isPairingHost = host == "localhost" || host == "127.0.0.1" ||
+                host.startsWith("192.168.") || host.startsWith("10.") || host.startsWith("172.")
+            isGoogle || isPairingHost
+        } catch (_: Exception) {
+            false
+        }
     }
 
     private fun isValidGoogleAvatarUrl(urlStr: String): Boolean {
         return try {
             val uri = Uri.parse(urlStr)
             val host = uri.host?.lowercase() ?: ""
-            uri.scheme == "https" && (
+            (uri.scheme == "https" || uri.scheme == "http") && (
                 host.endsWith(".googleusercontent.com") ||
-                host.endsWith(".ggpht.com")
+                host.endsWith(".ggpht.com") ||
+                host.endsWith(".google.com")
             )
         } catch (_: Exception) {
             false

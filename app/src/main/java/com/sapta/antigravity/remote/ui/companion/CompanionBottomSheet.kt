@@ -46,11 +46,13 @@ class CompanionBottomSheet(
     }
 
     private var dialog: BottomSheetDialog? = null
+    private var currentSheetView: View? = null
 
     fun show() {
         val bottomSheet = BottomSheetDialog(context, R.style.CustomBottomSheetDialogTheme)
         val view = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_companion, null)
         bottomSheet.setContentView(view)
+        currentSheetView = view
 
         setupAccountCard(view, bottomSheet)
         setupOnboardingSection(view)
@@ -65,10 +67,23 @@ class CompanionBottomSheet(
             bottomSheet.dismiss()
         }
 
+        bottomSheet.setOnDismissListener {
+            currentSheetView = null
+            dialog = null
+        }
+
         bottomSheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         bottomSheet.behavior.skipCollapsed = true
         dialog = bottomSheet
         bottomSheet.show()
+    }
+
+    fun refreshAccountView() {
+        val view = currentSheetView ?: return
+        val sheet = dialog ?: return
+        if (!sheet.isShowing) return
+        setupAccountCard(view, sheet)
+        setupOnboardingSection(view)
     }
 
     private fun setupAccountCard(view: View, sheet: Dialog) {
@@ -85,9 +100,19 @@ class CompanionBottomSheet(
         // Populate name & email from active session
         val currentName = preferences.cachedUserName
         val currentEmail = preferences.cachedUserEmail
+        val defaultName = context.getString(R.string.default_user_name)
 
-        if (currentName.isNotBlank()) {
+        if (currentName.isNotBlank() && !currentName.equals(defaultName, ignoreCase = true)) {
             txtName.text = currentName
+        } else if (currentEmail.isNotBlank()) {
+            val emailPrefix = currentEmail.substringBefore('@')
+                .replace('.', ' ')
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .split(' ')
+                .filter { it.isNotBlank() }
+                .joinToString(" ") { it.replaceFirstChar(Char::uppercase) }
+            txtName.text = if (emailPrefix.isNotBlank()) emailPrefix else currentEmail
         } else {
             txtName.setText(R.string.default_user_name)
         }
@@ -103,11 +128,13 @@ class CompanionBottomSheet(
 
         // Load avatar if cached locally
         val cachedAvatar = File(context.filesDir, "cached_avatar_primary.png")
-        if (cachedAvatar.exists()) {
+        if (cachedAvatar.exists() && cachedAvatar.length() > 0) {
             try {
                 val bitmap = BitmapFactory.decodeFile(cachedAvatar.absolutePath)
                 if (bitmap != null) {
                     imgAvatar.setImageBitmap(bitmap)
+                } else {
+                    imgAvatar.setImageResource(R.drawable.ic_avatar_placeholder)
                 }
             } catch (_: Exception) {
                 imgAvatar.setImageResource(R.drawable.ic_avatar_placeholder)

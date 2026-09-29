@@ -122,7 +122,10 @@ class MainActivity : AppCompatActivity(),
             pillView = btnQuickHud,
             containerView = rootContainer,
             appPreferences = preferences,
-            onPillClicked = { companionSheet.show() }
+            onPillClicked = {
+                ChatCommandInjector.injectAccountExtractor(webView)
+                companionSheet.show()
+            }
         )
         controlsController.attach()
     }
@@ -133,6 +136,9 @@ class MainActivity : AppCompatActivity(),
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         settings.databaseEnabled = true
+
+        settings.cacheMode = WebSettings.LOAD_DEFAULT
+        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
 
         // Security Hardening: Disable local file and content access
         settings.allowFileAccess = false
@@ -240,13 +246,25 @@ class MainActivity : AppCompatActivity(),
     // BridgeEventListener Callbacks
     override fun onAccountUpdated(name: String, email: String, avatarUrl: String, isPro: Boolean) {
         runOnUiThread {
-            if (name.isNotBlank()) preferences.cachedUserName = name
-            if (email.isNotBlank()) preferences.cachedUserEmail = email
-            preferences.isUserPro = isPro
+            var updated = false
+            if (name.isNotBlank() && name != preferences.cachedUserName) {
+                preferences.cachedUserName = name
+                updated = true
+            }
+            if (email.isNotBlank() && email != preferences.cachedUserEmail) {
+                preferences.cachedUserEmail = email
+                updated = true
+            }
+            if (isPro != preferences.isUserPro) {
+                preferences.isUserPro = isPro
+                updated = true
+            }
 
             if (avatarUrl.isNotBlank() && avatarUrl != preferences.cachedAvatarUrl) {
                 preferences.cachedAvatarUrl = avatarUrl
                 downloadAndCacheAvatar(avatarUrl)
+            } else if (updated) {
+                companionSheet.refreshAccountView()
             }
         }
     }
@@ -260,21 +278,31 @@ class MainActivity : AppCompatActivity(),
             try {
                 val url = URL(avatarUrl)
                 val host = url.host.lowercase()
-                if (!host.endsWith(".googleusercontent.com") && !host.endsWith(".ggpht.com")) {
+                if (!host.endsWith(".googleusercontent.com") && !host.endsWith(".ggpht.com") && !host.endsWith(".google.com")) {
                     return@thread
                 }
 
                 val conn = url.openConnection()
-                conn.connectTimeout = 6000
-                conn.readTimeout = 6000
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
                 val input = conn.getInputStream()
                 val targetFile = File(filesDir, "cached_avatar_primary.png")
-                val output = FileOutputStream(targetFile)
+                val tempFile = File(filesDir, "cached_avatar_primary.tmp")
+                val output = FileOutputStream(tempFile)
 
                 input.use { inStream ->
                     output.use { outStream ->
                         inStream.copyTo(outStream)
                     }
+                }
+
+                if (tempFile.exists() && tempFile.length() > 0) {
+                    if (targetFile.exists()) targetFile.delete()
+                    tempFile.renameTo(targetFile)
+                }
+
+                runOnUiThread {
+                    companionSheet.refreshAccountView()
                 }
             } catch (e: Exception) {
                 Log.w("MainActivity", "Avatar download skipped: ${e.message}")
@@ -327,5 +355,11 @@ class MainActivity : AppCompatActivity(),
 
     override fun onReloadRequested() {
         webView.reload()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        webView.removeJavascriptInterface(AntigravityAccountBridge.JAVASCRIPT_NAME)
+        webView.destroy()
     }
 }

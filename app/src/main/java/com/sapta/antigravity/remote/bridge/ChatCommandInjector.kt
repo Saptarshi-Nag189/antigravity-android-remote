@@ -23,57 +23,126 @@ object ChatCommandInjector {
                         var avatarUrl = '';
                         var isPro = false;
 
-                        var accountButtons = document.querySelectorAll(
-                            'button[aria-label*="Google Account" i], button[aria-label*="@" i], [aria-label*="Account Information" i], [data-identifier*="@" i], [aria-label*="Profile" i]'
-                        );
+                        // 1. Scan for Google Account profile anchors and buttons
+                        var accountElements = document.querySelectorAll([
+                            '[aria-label*="Google Account" i]',
+                            'a[href*="SignOutOptions"]',
+                            'a[href*="accounts.google.com"]',
+                            '[data-identifier*="@" i]',
+                            '[aria-label*="@" i]',
+                            'button[aria-label*="Account" i]',
+                            'a[aria-label*="Account" i]',
+                            '[role="button"][aria-label*="Account" i]',
+                            'header [role="button"]'
+                        ].join(', '));
 
-                        for (var i = 0; i < accountButtons.length; i++) {
-                            var btn = accountButtons[i];
-                            var label = btn.getAttribute('aria-label') || '';
-                            var emailMatch = label.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/i);
-                            if (emailMatch && !email) {
-                                email = emailMatch[1];
-                            }
-                            var cleanLabel = label.replace(/Google Account:?/i, '').replace(email, '').trim();
-                            if (cleanLabel.length > 2 && !name) {
-                                name = cleanLabel.split('\n')[0].replace(/\(.*?\)/g, '').trim();
+                        for (var i = 0; i < accountElements.length; i++) {
+                            var el = accountElements[i];
+                            var label = el.getAttribute('aria-label') || el.getAttribute('title') || '';
+
+                            if (!email && label) {
+                                var emailMatch = label.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+                                if (emailMatch) {
+                                    email = emailMatch[1].trim();
+                                }
                             }
 
-                            var img = btn.querySelector('img');
-                            if (img && img.src && !avatarUrl) {
-                                avatarUrl = img.src;
+                            if (!email) {
+                                var dataId = el.getAttribute('data-identifier') || el.getAttribute('data-email') || '';
+                                if (dataId && dataId.indexOf('@') !== -1) {
+                                    email = dataId.trim();
+                                }
                             }
-                        }
 
-                        if (!email) {
-                            var allElements = document.querySelectorAll('*');
-                            for (var e = 0; e < allElements.length; e++) {
-                                var elemText = allElements[e].innerText || '';
-                                if (elemText.length < 120) {
-                                    var match = elemText.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/i);
-                                    if (match) {
-                                        email = match[1];
+                            if (!name && label) {
+                                var raw = label.replace(/^Google Account:?\s*/i, '').trim();
+                                var candidate = raw.split('\n')[0].split('(')[0].split(',')[0].trim();
+                                if (candidate.length >= 2 &&
+                                    candidate.toLowerCase() !== 'google account' &&
+                                    candidate.toLowerCase() !== 'profile' &&
+                                    !candidate.includes('@')) {
+                                    name = candidate;
+                                }
+                            }
+
+                            if (!avatarUrl) {
+                                var imgs = el.querySelectorAll('img');
+                                for (var j = 0; j < imgs.length; j++) {
+                                    var src = imgs[j].src || imgs[j].getAttribute('src') || '';
+                                    if (src.indexOf('googleusercontent.com') !== -1 || src.indexOf('ggpht.com') !== -1) {
+                                        avatarUrl = src;
                                         break;
                                     }
                                 }
                             }
                         }
 
-                        if (!avatarUrl) {
-                            var imgs = document.querySelectorAll('img[src*="googleusercontent.com"], img[src*="ggpht.com"]');
-                            for (var j = 0; j < imgs.length; j++) {
-                                if (imgs[j].src) {
-                                    avatarUrl = imgs[j].src;
+                        // 2. Fallback scan for user email in document
+                        if (!email) {
+                            var emailMeta = document.querySelector('meta[name="user-email"], [data-user-email], [data-email]');
+                            if (emailMeta) {
+                                email = emailMeta.getAttribute('content') || emailMeta.getAttribute('data-user-email') || emailMeta.getAttribute('data-email') || '';
+                            }
+                        }
+                        if (!email) {
+                            var mailAnchors = document.querySelectorAll('a[href^="mailto:"]');
+                            if (mailAnchors.length > 0) {
+                                var m = mailAnchors[0].href.replace(/^mailto:/i, '').split('?')[0].trim();
+                                if (m.indexOf('@') !== -1) email = m;
+                            }
+                        }
+                        if (!email) {
+                            var allElems = document.querySelectorAll('[aria-label], [title]');
+                            for (var e = 0; e < allElems.length; e++) {
+                                var text = (allElems[e].getAttribute('aria-label') || '') + ' ' + (allElems[e].getAttribute('title') || '');
+                                var match = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+                                if (match) {
+                                    email = match[1].trim();
                                     break;
                                 }
                             }
                         }
 
-                        var bodyText = document.body ? document.body.innerText : '';
+                        // 3. Fallback scan for user name in document
+                        if (!name) {
+                            var headings = document.querySelectorAll('h1, h2, [role="heading"], .user-name, [data-user-name]');
+                            for (var h = 0; h < headings.length; h++) {
+                                var hText = (headings[h].innerText || headings[h].textContent || '').trim();
+                                var welcomeMatch = hText.match(/Welcome,\s*([A-Za-z\s]+)/i);
+                                if (welcomeMatch && welcomeMatch[1].trim().length > 1) {
+                                    name = welcomeMatch[1].trim();
+                                    break;
+                                }
+                            }
+                        }
+
+                        // 4. Fallback scan for avatar URL
+                        if (!avatarUrl) {
+                            var allImgs = document.querySelectorAll('img[src*="googleusercontent.com"], img[src*="ggpht.com"]');
+                            for (var k = 0; k < allImgs.length; k++) {
+                                var s = allImgs[k].src || allImgs[k].getAttribute('src') || '';
+                                if (s.indexOf('/a/') !== -1 || s.indexOf('photo') !== -1 || s.indexOf('/ogw/') !== -1 ||
+                                    allImgs[k].classList.contains('gb_X') || allImgs[k].classList.contains('gbii')) {
+                                    avatarUrl = s;
+                                    break;
+                                }
+                            }
+                            if (!avatarUrl && allImgs.length > 0) {
+                                avatarUrl = allImgs[0].src;
+                            }
+                        }
+
+                        // 5. Upgrade low-res avatar URL to high resolution (=s256-c-mo)
+                        if (avatarUrl && avatarUrl.indexOf('googleusercontent.com') !== -1) {
+                            avatarUrl = avatarUrl.replace(/=s\d+(-[a-z0-9]+)*/i, '=s256-c-mo');
+                        }
+
+                        // 6. Pro / Subscription Detection
+                        var bodyText = document.body ? (document.body.innerText || '') : '';
                         var proElements = document.querySelectorAll('.pro-badge, [aria-label*="Pro" i], [class*="badge" i], [class*="pro" i], [data-plan*="pro" i]');
-                        for (var k = 0; k < proElements.length; k++) {
-                            var txt = (proElements[k].innerText || proElements[k].textContent || '').trim().toLowerCase();
-                            if (txt === 'pro' || txt.includes('pro tier') || txt.includes('antigravity pro') || txt.includes('gemini advanced')) {
+                        for (var p = 0; p < proElements.length; p++) {
+                            var pTxt = (proElements[p].innerText || proElements[p].textContent || '').trim().toLowerCase();
+                            if (pTxt === 'pro' || pTxt.includes('pro tier') || pTxt.includes('antigravity pro') || pTxt.includes('gemini advanced') || pTxt.includes('google one')) {
                                 isPro = true;
                                 break;
                             }
@@ -89,14 +158,16 @@ object ChatCommandInjector {
                 }
 
                 extractData();
+                setTimeout(extractData, 500);
                 setTimeout(extractData, 1500);
-                setTimeout(extractData, 4000);
+                setTimeout(extractData, 3500);
+                setTimeout(extractData, 6000);
 
                 if (window.MutationObserver && document.body) {
                     var observer = new MutationObserver(function() {
                         extractData();
                     });
-                    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-label', 'src'] });
+                    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-label', 'src', 'title'] });
                 }
             })();
         """.trimIndent()
