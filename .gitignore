@@ -1,0 +1,15 @@
+*.apk
+*.ap_
+*.aab
+*.rename_to_apk
+build/
+.gradle/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+/artifacts/
+*.keystore
+*.jks

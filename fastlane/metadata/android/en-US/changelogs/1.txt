@@ -1,0 +1,6 @@
+1.0.0: Initial Open-Source Release
+• Android 16 edge-to-edge support with predictive back navigation.
+• Material 3 companion HUD and multi-account identity bridge.
+• Step-by-step workstation onboarding guidance for /remote sessions.
+• Background keep-alive service for persistent session connectivity.
+• 100% open-source FOSS release configuration for F-Droid and IzzyOnDroid.

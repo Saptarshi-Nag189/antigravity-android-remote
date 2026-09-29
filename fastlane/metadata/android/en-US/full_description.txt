@@ -1,0 +1,13 @@
+Antigravity Remote is an open-source companion client designed for Google Antigravity web development sessions.
+
+Features:
+• Edge-to-Edge Interface: Built for modern Android versions (Android 15 and 16) with dynamic IME padding and full-screen window insets.
+• Companion Controls: Material 3 floating bottom sheet providing rapid session inspection, Pro status verification, and instant multi-account switching.
+• Workstation Onboarding: Step-by-step guidance to connect your computer running Antigravity via the /remote command.
+• Offline Resilience: Native network handover detection with automated offline status fallback when connections drop.
+• Persistent Session Streaming: Integrated low-overhead foreground keep-alive service prevents WebSocket teardown and background process freezing.
+• File and Screenshot Upload: Integrated file picker bridge supporting instant asset attachment directly into remote development workflows.
+• Privacy and Security: 100% free and open-source. Contains zero advertising SDKs, zero third-party telemetry, and zero proprietary Google Play Services dependencies.
+
+Disclaimer:
+Antigravity Remote is an independent open-source project and is not affiliated with, sponsored by, or endorsed by Google LLC. All trademarks belong to their respective owners.

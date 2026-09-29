@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Google Material 3 Dark Official Palette -->
+    <color name="google_bg_dark">#131314</color>
+    <color name="google_surface_container">#1e1f20</color>
+    <color name="google_surface_container_high">#282a2c</color>
+    <color name="google_surface_container_highest">#333537</color>
+    <color name="google_divider">#3c4043</color>
+    <color name="google_outline">#444746</color>
+    <color name="google_accent_blue">#a8c7fa</color>
+    <color name="google_on_blue">#062e6f</color>
+    <color name="google_badge_blue_container">#0b2e58</color>
+    <color name="google_accent_green">#34a853</color>
+    <color name="google_text_primary">#e3e3e3</color>
+    <color name="google_text_secondary">#c4c7c5</color>
+    <color name="google_text_muted">#8e918f</color>
+
+    <!-- Compatibility mappings -->
+    <color name="bg_dark">#131314</color>
+    <color name="surface_card">#1e1f20</color>
+    <color name="surface_card_high">#282a2c</color>
+    <color name="surface_border">#3c4043</color>
+    <color name="accent_cyan">#a8c7fa</color>
+    <color name="accent_blue">#a8c7fa</color>
+    <color name="accent_green">#34a853</color>
+    <color name="text_primary">#e3e3e3</color>
+    <color name="text_secondary">#c4c7c5</color>
+    <color name="text_muted">#8e918f</color>
+</resources>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Antigravity Status</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #121212;
+            color: #e3e3e3;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Google Sans", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 24px;
+            text-align: center;
+            overscroll-behavior: none;
+        }
+        .pulse-container {
+            position: relative;
+            width: 72px;
+            height: 72px;
+            margin-bottom: 24px;
+        }
+        .pulse-circle {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(138, 180, 248, 0.15);
+            animation: pulse 2s infinite ease-out;
+        }
+        .pulse-core {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #8ab4f8;
+            box-shadow: 0 0 16px rgba(138, 180, 248, 0.6);
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 0.2; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+        h2 { font-size: 20px; font-weight: 600; color: #ffffff; margin-bottom: 8px; }
+        p { font-size: 14px; color: #9aa0a6; line-height: 1.5; max-width: 280px; margin-bottom: 28px; }
+        .retry-btn {
+            background: #8ab4f8;
+            color: #121212;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(138, 180, 248, 0.3);
+            transition: transform 0.1s ease;
+        }
+        .retry-btn:active {
+            transform: scale(0.96);
+        }
+        .hint {
+            margin-top: 24px;
+            font-size: 12px;
+            color: #5f6368;
+        }
+        code {
+            background: #202124;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #64ffda;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="pulse-container">
+        <div class="pulse-circle"></div>
+        <div class="pulse-core"></div>
+    </div>
+    <h2>Connecting to Antigravity</h2>
+    <p>Waiting for network connection or local daemon handshake...</p>
+    <button class="retry-btn" onclick="location.reload()">Retry Connection</button>
+    <div class="hint">Pair with CLI: <code>./sync-auth.sh</code></div>
+</body>
+</html>
