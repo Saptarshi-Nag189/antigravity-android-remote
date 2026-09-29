@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowManager
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -14,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.widget.NestedScrollView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
@@ -72,6 +74,14 @@ class CompanionBottomSheet(
             dialog = null
         }
 
+        bottomSheet.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+
+        bottomSheet.findViewById<FrameLayout>(com.google.android.material.R.id.design_bottom_sheet)?.let { frame ->
+            val behavior = BottomSheetBehavior.from(frame)
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            behavior.skipCollapsed = true
+        }
+
         bottomSheet.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         bottomSheet.behavior.skipCollapsed = true
         dialog = bottomSheet
@@ -87,6 +97,7 @@ class CompanionBottomSheet(
     }
 
     private fun setupAccountCard(view: View, sheet: Dialog) {
+        val rowPrimary = view.findViewById<LinearLayout>(R.id.rowAccountPrimary)
         val txtName = view.findViewById<TextView>(R.id.txtPrimaryName)
         val txtEmail = view.findViewById<TextView>(R.id.txtPrimaryEmail)
         val badgePro = view.findViewById<TextView>(R.id.badgePro)
@@ -97,30 +108,16 @@ class CompanionBottomSheet(
         val rowAdd = view.findViewById<LinearLayout>(R.id.rowAddAccount)
         val rowSignOut = view.findViewById<LinearLayout>(R.id.rowSignOut)
 
-        // Populate name & email from active session
+        // Populate name & email from runtime active session
         val currentName = preferences.cachedUserName
         val currentEmail = preferences.cachedUserEmail
-        val defaultName = context.getString(R.string.default_user_name)
 
-        if (currentName.isNotBlank() && !currentName.equals(defaultName, ignoreCase = true)) {
-            txtName.text = currentName
-        } else if (currentEmail.isNotBlank()) {
-            val emailPrefix = currentEmail.substringBefore('@')
-                .replace('.', ' ')
-                .replace('_', ' ')
-                .replace('-', ' ')
-                .split(' ')
-                .filter { it.isNotBlank() }
-                .joinToString(" ") { it.replaceFirstChar(Char::uppercase) }
-            txtName.text = if (emailPrefix.isNotBlank()) emailPrefix else currentEmail
-        } else {
-            txtName.setText(R.string.default_user_name)
-        }
+        txtName.text = currentName
+        txtEmail.text = currentEmail
 
-        if (currentEmail.isNotBlank()) {
-            txtEmail.text = currentEmail
-        } else {
-            txtEmail.setText(R.string.default_user_email)
+        // Tap on primary account row to edit / customize profile details
+        rowPrimary.setOnClickListener {
+            showEditProfileDialog()
         }
 
         // Pro badge
@@ -175,10 +172,54 @@ class CompanionBottomSheet(
         }
     }
 
+    private fun showEditProfileDialog() {
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = (20 * context.resources.displayMetrics.density).toInt()
+            setPadding(pad, pad / 2, pad, pad / 2)
+        }
+
+        val editName = EditText(context).apply {
+            hint = "Display name"
+            setText(preferences.cachedUserName)
+            setTextColor(context.getColor(R.color.google_text_primary))
+            setHintTextColor(context.getColor(R.color.google_text_muted))
+            textSize = 14f
+            setSingleLine(true)
+        }
+
+        val editEmail = EditText(context).apply {
+            hint = "Email address"
+            setText(preferences.cachedUserEmail)
+            setTextColor(context.getColor(R.color.google_text_primary))
+            setHintTextColor(context.getColor(R.color.google_text_muted))
+            textSize = 14f
+            inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            setSingleLine(true)
+        }
+
+        layout.addView(editName)
+        layout.addView(editEmail)
+
+        AlertDialog.Builder(context)
+            .setTitle(R.string.dialog_edit_profile_title)
+            .setView(layout)
+            .setPositiveButton(R.string.action_save) { _, _ ->
+                val newName = editName.text.toString().trim()
+                val newEmail = editEmail.text.toString().trim()
+                if (newName.isNotBlank()) preferences.cachedUserName = newName
+                if (newEmail.isNotBlank()) preferences.cachedUserEmail = newEmail
+                refreshAccountView()
+                Toast.makeText(context, R.string.toast_account_updated, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.action_cancel, null)
+            .show()
+    }
+
     private fun setupOnboardingSection(view: View) {
         val cardOnboarding = view.findViewById<LinearLayout>(R.id.cardOnboardingInstructions)
-        // Show onboarding instructions when no active session is detected
-        if (preferences.hasActiveSession) {
+        // Show onboarding instructions when no remote session link has been established
+        if (preferences.lastRemoteLink.isNotBlank()) {
             cardOnboarding.visibility = View.GONE
         } else {
             cardOnboarding.visibility = View.VISIBLE
@@ -192,6 +233,19 @@ class CompanionBottomSheet(
 
         if (preferences.lastRemoteLink.isNotBlank()) {
             editLink.setText(preferences.lastRemoteLink)
+        }
+
+        // Smooth scroll to card when user focuses on the link input
+        editLink.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                view.postDelayed({
+                    val scrollView = view.findViewById<NestedScrollView>(R.id.sheetScrollView)
+                    val card = view.findViewById<View>(R.id.cardRemoteLink)
+                    if (scrollView != null && card != null) {
+                        scrollView.smoothScrollTo(0, card.top)
+                    }
+                }, 150)
+            }
         }
 
         btnPaste.setOnClickListener {

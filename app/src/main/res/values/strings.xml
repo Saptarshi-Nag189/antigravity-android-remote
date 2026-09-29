@@ -6,8 +6,8 @@
     <string name="close_button_description">Close companion controls</string>
 
     <!-- Account Switcher & Identity -->
-    <string name="default_user_name">Antigravity User</string>
-    <string name="default_user_email">No active account</string>
+    <string name="default_user_name">Saptarshi Nag</string>
+    <string name="default_user_email">saptarshinag18@gmail.com</string>
     <string name="secondary_account_title">Other accounts</string>
     <string name="action_manage_google_account">Manage your Google Account</string>
     <string name="action_add_another_account">Add another account</string>
@@ -58,6 +58,9 @@
     <string name="dialog_sign_out_message">This will sign out of all active Google accounts and clear local session cookies. Are you sure you want to proceed?</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_sign_out">Sign out</string>
+    <string name="dialog_edit_profile_title">Edit account details</string>
+    <string name="action_save">Save</string>
+    <string name="toast_account_updated">Account profile updated</string>
     <string name="footer_privacy">Privacy Policy</string>
     <string name="footer_terms">Terms of Service</string>
 

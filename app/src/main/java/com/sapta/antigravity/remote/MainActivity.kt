@@ -109,10 +109,7 @@ class MainActivity : AppCompatActivity(),
     private fun setupWindowInsets() {
         ViewCompat.setOnApplyWindowInsetsListener(rootContainer) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-
-            val bottomPadding = maxOf(systemBars.bottom, ime.bottom)
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, bottomPadding)
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
     }

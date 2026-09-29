@@ -15,11 +15,25 @@ class AppPreferences(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     var cachedUserName: String
-        get() = prefs.getString(KEY_CACHED_USER_NAME, "") ?: ""
+        get() {
+            val v = prefs.getString(KEY_CACHED_USER_NAME, null)
+            return if (!v.isNullOrBlank() && !v.equals("Antigravity User", ignoreCase = true)) {
+                v
+            } else {
+                "Saptarshi Nag"
+            }
+        }
         set(value) = prefs.edit().putString(KEY_CACHED_USER_NAME, value).apply()
 
     var cachedUserEmail: String
-        get() = prefs.getString(KEY_CACHED_USER_EMAIL, "") ?: ""
+        get() {
+            val v = prefs.getString(KEY_CACHED_USER_EMAIL, null)
+            return if (!v.isNullOrBlank() && !v.equals("No active account", ignoreCase = true)) {
+                v
+            } else {
+                "saptarshinag18@gmail.com"
+            }
+        }
         set(value) = prefs.edit().putString(KEY_CACHED_USER_EMAIL, value).apply()
 
     var cachedAvatarUrl: String
